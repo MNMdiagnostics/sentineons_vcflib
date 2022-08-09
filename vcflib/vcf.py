@@ -28,7 +28,7 @@ class Variant(object):
 class VCF(sharder.Shardable):
     decoders = { 'Integer': int, 'Float': float, 'Flag': bool }
     encoders = { 'Integer': str, 'Float': str }
-    kvpat = re.compile(r'(.*?)=(".*?"|.*?)(?:,|$)') 
+    kvpat = re.compile(r'(.*?)=(".*?"|.*?)(?:,|$)')
 
     def __init__(self, path, mode='r'):
         self.path = path
@@ -174,7 +174,7 @@ class VCF(sharder.Shardable):
         if v == '.':
             v = None
         elif d['Number'] != '0' and d['Number'] != '1':
-            v = list(map(cvt, v.split(',')))
+            v = [None if e=='.' else cvt(e) for e in v.split(',')]
         elif cvt:
             v = cvt(v)
         return (k,v)
