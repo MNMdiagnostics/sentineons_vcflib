@@ -6,14 +6,14 @@ Copyright (c) Sentieon Inc. All rights reserved.
 
   Redistribution and use in source and binary forms, with or without
   modification, are permitted provided that the following conditions are met:
-  
+
   * Redistributions of source code must retain the above copyright notice, this
     list of conditions and the following disclaimer.
-  
+
   * Redistributions in binary form must reproduce the above copyright notice,
     this list of conditions and the following disclaimer in the documentation
     and/or other materials provided with the distribution.
-  
+
   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
   AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
   IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -63,7 +63,7 @@ def ifmerge(v1, v2):
     # coordinate off by 1
     if v1.chrom != v2.chrom or v2.pos - v1.pos > max_distance + len(v1.ref) - 1:
         return False
-    # share the same PID and PGT 
+    # share the same PID and PGT
     pid1 = v1.samples[0].get("PID", "")
     pid2 = v2.samples[0].get("PID", "")
     pgt1 = v1.samples[0].get("PGT", "")
@@ -88,7 +88,7 @@ def distance(v1, v2):
     return v2.pos - v1.pos - len(v1.ref) + 1
 
 def merge(vs):
-    
+
     def _merge(vv):
         len_vv = len(vv)
         for i in range(len_vv-1):
@@ -134,20 +134,23 @@ def merge(vs):
         for i in range(len(vcf.samples)):
             t = v.samples[i]
             vv_samples = [vs.samples[i] for vs in vv]
-            if type(vv_samples[0]["AF"]) == list:
-                t["AF"] = [sum([vsi["AF"][j] for vsi in vv_samples])/len_vv for j in range(len(alt))]
-            else:
-                t["AF"] = sum([vsi["AF"] for vsi in vv_samples])/len_vv
-            ads = [(vi["AD"][0], vi["AD"][1]) for vi in vv_samples]
-            t["AD"] = (int(sum([vi["AD"][0] for vi in vv_samples])/len_vv), int(sum([vi["AD"][1] for vi in vv_samples])/len_vv))
-            afdp = [vi.get("AFDP") for vi in vv_samples]
-            if None not in afdp:
-                t["AFDP"] = int(sum(afdp)/len_vv)
+            if "AF" in vv_samples[0]:
+                if type(vv_samples[0]["AF"]) == list:
+                    t["AF"] = [sum([vsi["AF"][j] for vsi in vv_samples])/len_vv for j in range(len(alt))]
+                else:
+                    t["AF"] = sum([vsi["AF"] for vsi in vv_samples])/len_vv
+            if "AD" in vv_samples[0]:
+                ads = [(vi["AD"][0], vi["AD"][1]) for vi in vv_samples]
+                t["AD"] = (int(sum([vi["AD"][0] for vi in vv_samples])/len_vv), int(sum([vi["AD"][1] for vi in vv_samples])/len_vv))
+            if "AFDP" in vv_samples[0]:
+                afdp = [vi.get("AFDP") for vi in vv_samples]
+                if None not in afdp:
+                    t["AFDP"] = int(sum(afdp)/len_vv)
         _ = vcf.format(v)
         for vi in vv:
             _ = vcf.format(vi)
         return v
-    
+
     vlist = []
     to_push = []
     for i in range(len(vs)):
@@ -160,7 +163,7 @@ def merge(vs):
                     to_merge.append(vj)
             if len(to_merge) > 1:
                 merged = _merge(to_merge)
-                if merged: 
+                if merged:
                     to_push.append(merged)
         while len(to_push):
             if to_push[0].pos <= vi.pos:
@@ -213,7 +216,7 @@ def process(vcf_file, ref_file, out_file, merge_options):
                     print(v, file=out_fh)
                 last = []
                 if "PASS" not in variant.filter or "SVTYPE" in variant.info:
-                    print(variant, file=out_fh) 
+                    print(variant, file=out_fh)
                 else:
                     last.append(variant)
     last = merge(last)
